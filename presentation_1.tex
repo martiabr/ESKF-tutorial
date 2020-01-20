@@ -194,7 +194,57 @@
             \end{aligned}
         \end{equation}
     \end{block}
-    The Kalman Filter is the optimal Luenberger observer for this system, in the sense that it minimizes \textbf{mean squared error}!
+    The Kalman Filter is the optimal Luenberger observer for this system, in the sense that it minimizes \textbf{mean squared error}, i.e. $E\{(x-\hat{x})^2\}$. 
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{The Kalman filter equations}
+    For the discrete case (which is what you would implement on a microcontroller) the Kalman filter equations are:
+    \begin{figure}
+        \includegraphics[width=0.8\linewidth]{kf_equations.png}
+    \end{figure}
+    The details are not important here, but note the predict + correct steps. 
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{The satellite kinematics and kinetics}
+    Let's try to apply the Kalman filter to our satellite:
+    \begin{block}{Satellite kinematics}
+        \begin{equation}
+            \begin{aligned}
+                \dot{\mathbf{q}}=\frac{1}{2} \mathbf{q} \otimes \boldsymbol{\omega}
+            \end{aligned}
+        \end{equation}
+    \end{block}
+    \begin{block}{Satellite kinetics}
+        \begin{equation}
+            \begin{aligned}
+                \dot{\omega}=J^{-1}\left[\mathbf{L}-\omega \times\left(J \omega\right)\right]
+            \end{aligned}
+        \end{equation}
+    \end{block}
+    Problem: the system is highly nonlinear, so the Kalman filter cannot be directly applied (since it assumes a linear model).
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{Extended Kalman filter}
+    The easiest solution to this problem would be to linearize the nonlinear dynamics at each timestep $\rightarrow$ Extended Kalman filter (EKF). \\~\\
+
+    Problem: modeling uncertainty - the kinetics require that we know the inertia matrix of the satellite and since the dynamics are highly nonlinear the EKF might diverge:( \\~\\
+
+    $\rightarrow$ Drop the kinetics, only use the kinematics: $\dot{\mathbf{q}}=\frac{1}{2} \mathbf{q} \otimes \boldsymbol{\omega}$. \\
+    We let $\omega$ be the "control input", which we measure with the IMU. \\~\\
+\end{frame}
+
+\begin{frame}
+    \frametitle{Error-state Kalman filter}
+    Now we are getting closer to a somewhat usage algorithm, but the dynamics are still highly nonlinear, which means the EKF will behave poorly.
 \end{frame}
 
 %------------------------------------------------
