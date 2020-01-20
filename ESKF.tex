@@ -242,7 +242,7 @@
 
 \begin{frame}
     \frametitle{Extended Kalman filter}
-    The easiest solution to this problem would be to linearize the nonlinear dynamics at each timestep $\rightarrow$ Extended Kalman filter (EKF). \\~\\
+    The easiest solution to this problem would be to \textbf{linearize the nonlinear dynamics at each timestep} $\rightarrow$ Extended Kalman filter (EKF). \\~\\
 
     Problem: modeling uncertainty - the kinetics require that we know the inertia matrix of the satellite and since the dynamics are highly nonlinear the EKF might diverge:( \\~\\
 
@@ -258,7 +258,7 @@
     \frametitle{Error-state Kalman filter}
     Now we are getting closer to a somewhat usable algorithm, but the dynamics are still highly nonlinear, which means the EKF will behave poorly (easily diverge).\\~\\
 
-    The solution is to investigate the error quaternion instead: $q=\delta q \otimes \hat{q}$\\~\\
+    The solution is to investigate the \textbf{error quaternion} instead: $q=\delta q \otimes \hat{q}$\\~\\
 
     If we approximate $\delta q \approx \left[\begin{array}{c}{\frac{1}{2} \delta \boldsymbol{\theta}} \\ {1}\end{array}\right]$, and ignore some terms we get:
         \begin{block}{Error quaternion kinematics ish}
