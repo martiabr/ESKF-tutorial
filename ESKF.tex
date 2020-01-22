@@ -79,6 +79,7 @@
 \usepackage{graphicx} % Allows including images
 \usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
 \usepackage{hyperref}
+\usepackage{amsmath}
 
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
@@ -294,6 +295,88 @@
     \begin{figure}
         \includegraphics[width=0.7\linewidth]{ESKF.png}
     \end{figure}
+\end{frame}
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{ESKF predict equations reference}
+    The next few slides will summarize the actual equations in the ESKF and should mostly serve as a reference when trying to understand the code. I skipped some of the most nasty expressions out of laziness, look them up in the supplied sources.\\~\\
+    Predict $\hat{b}_{k+1|k}$ and $\hat{\omega}_{k+1|k}$ from our very simple models:
+    \begin{align}
+        \hat{b}_{k+1|k} &\leftarrow \hat{b}_{k|k} \\
+        \hat{\omega}_{k+1|k} &\leftarrow \omega_m - \hat{b}_{k|k}
+    \end{align}
+    Predict $\hat{q}_{k+1|k}$ using 1. order quaternion integrator:
+    \begin{equation}
+        \hat{q}_{k+1|k} \leftarrow \left({q}\{\bar{\omega} \Delta t\}+\frac{\Delta t^{2}}{24}\left[\begin{array}{c}{0} \\ {\omega_{k|k} \times \omega_{k+1|k}}\end{array}\right]\right) \otimes \hat{q}_{k|k}
+    \end{equation}
+    Predict the covariance matrix using the state transition matrix and process noise covariance matrix:
+\begin{equation}
+    {P}_{k+1 | k} \leftarrow {\Phi} {P}_{k | k} {\Phi}^{\top}+{Q}
+\end{equation}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{ESKF update equations reference}
+    First alculate the current attitude rotation matrix $A(\hat{q}_{k+1|k})$:
+    \begin{equation}
+        A(\hat{q}_{k+1|k}) \leftarrow \begin{bmatrix}
+            1 - 2(q_2^2 + q_3^2) & 2(q_1 q_2 + q_3 q_4) & 2(q_1 q_3 - q_2 q_4) \\
+            2(q_1 q_2 - q_3 q_4) & 1 - 2(q_1^2 + q_3^2) & 2(q_2 q_3 + q_1 q_4) \\
+            2(q_1 q_3 + q_2 q_4) & 2(q_2 q_3 - q_1 q_4) & 1 - 2(q_1^2 + q_2^2)
+        \end{bmatrix}
+    \end{equation}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{ESKF update equations reference}
+    Then do the following steps for each measurement sequentially: \\
+    Rotate $\hat{z}$ from ECI to body using $A(\hat{q}_{k+1|k})$:
+    \begin{equation}
+        \hat{z}_b \leftarrow A(\hat{q}_{k+1|k}) \hat{z}_{ECI}
+    \end{equation}
+    Calculate measurement matrix:
+    \begin{equation}
+        H_k \leftarrow \begin{bmatrix}
+            S(\hat{z}_b) & 0_{3x3}
+        \end{bmatrix}
+    \end{equation}
+    Calculate Kalman gain:
+    \begin{equation}
+        K_k \leftarrow P_{k+1|k} H_k^{\top} S_k^{-1}, \quad S_k \leftarrow H_k P_{k+1|k} H_k^{\top} + R
+    \end{equation}
+    Calculate correction:
+    \begin{equation}
+        \Delta x \leftarrow \Delta x + K (\varepsilon - H_k \Delta x), \quad \varepsilon \leftarrow z - \hat{z}
+    \end{equation}
+    Update covariance estimate:
+    \begin{equation}
+        {P}_{k+1 | k+1} \leftarrow \left({I}_{6}-{K} {H}\right) {P}_{k+1 | k}\left({I}_{6}-{K} {H}\right)^{\top}+{K} {R} {K}^{\top}
+    \end{equation}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+    \frametitle{ESKF update equations reference}
+    Update attitude quaternion estimate:
+    \begin{equation}
+        \hat{{q}}_{k+1 | k+1} \leftarrow \hat{{q}}_{k+1 | k} \otimes \delta \hat{{q}}, \quad 
+    \delta \hat{{q}}=\left[\begin{array}{c}{\frac{1}{2}\Delta x_{1:3}} \\ {\sqrt{1-\frac{1}{2}\Delta x_{1:3}^{\top} \frac{1}{2}\Delta x_{1:3}}}\end{array}\right]
+    \end{equation}
+    Update bias estimate:
+    \begin{equation}
+        \hat{{b}}_{k+1 | k+1}=\hat{{b}}_{k+1 | k}+\Delta x_{4:6}
+    \end{equation}
+    Update angular velocity estimate:
+    \begin{equation}
+        \hat{\omega}_{k+1 | k+1}=\omega_{m}-\hat{{b}}_{k+1 | k+1}
+    \end{equation}
+    And repeat!
 \end{frame}
 
 %------------------------------------------------
